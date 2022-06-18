@@ -1,10 +1,16 @@
+//running this app with --no-sound-null-safety
+
 import 'dart:convert';
 import 'dart:ui';
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 
 void main() {
   runApp(MyApp());
@@ -19,27 +25,45 @@ class MyApp extends StatelessWidget {
   }
 }
 
-int id = 1;
-String title = 'Crear contraseña';
+//create the secure storage
+final storage = new FlutterSecureStorage();
+
+Future saveSecureStorage (String key, String value) async {
+  await storage.write(key: key, value: value);
+}
+
+Future readValueInSecureStorage (String key) async {
+  //this should return an string
+  return await storage.read(key: key);
+}
+
+Future deleteValueInSecureStorage (String key) async {
+  await storage.delete(key: key);
+}
+
 
 class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
 }
 
-Future<void> guardar(String id, String data) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.setString('uno', 'segunda cosa guardada');
-}
+
 
 class _HomePageState extends State<HomePage> {
+  @override
 
   //variable password writed on the text field
   final passwordTextField = TextEditingController();
-  String password = '';
+
 
   @override
   Widget build(BuildContext context) {
+    var valueMother;
+
+    readValueInSecureStorage('mother_key').then(
+            (value) {
+          valueMother = value;
+        });
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -47,16 +71,14 @@ class _HomePageState extends State<HomePage> {
         title: Text('Contraseña 😏'),
       ),
 
-      body:
-
-        Column(
+      body:Column(
 
         mainAxisAlignment: MainAxisAlignment.center,
 
         children: [
           ListTile(
               title: Text(
-                  title,
+                  'Contraseña',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
@@ -117,19 +139,69 @@ class _HomePageState extends State<HomePage> {
               child: const Icon(Icons.arrow_forward_ios_rounded),
 
               onPressed: () {
-                password = passwordTextField.text;
 
-                //funcion guardar shared_preferences
-                guardar(id.toString() ,password);
+                //saveSecureStorage('mother_key', passwordTextField.text);
 
-                if(password == '') {
-                  print('A te bañaste');
-                } else {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => SecondRoute()),
-                        (Route<dynamic> route) => false,
+
+                if(passwordTextField.text == '') {
+                  //show alert when the password field its empty
+                  showDialog<String>(
+                    context: context,
+                    builder: (BuildContext context) => AlertDialog(
+                      title: const Text('Creo que se le olvido escribir su contraseña'),
+                      content: const Text('No puedo dejarlo pasar sin invitacion 🙂'),
+
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, 'Cancel'),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, 'OK'),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
                   );
+                } else {
+                  if(valueMother.toString() == ''){
+                    print('null compayito');
+                    saveSecureStorage('mother_key', passwordTextField.text);
+                  } else {
+                    if(passwordTextField.text == valueMother.toString()){
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (context) => SecondRoute()),
+                            (Route<dynamic> route) => false,
+                      );
+                    } else {
+
+                      print('Valor de value mother: ' + valueMother.toString());
+
+                      //contrasena incorrecta
+                      showDialog<String>(
+                        context: context,
+                        builder: (BuildContext context) => AlertDialog(
+                          title: const Text('Contraseña incorrecta'),
+                          content: const Text('No puedo dejarlo pasar sin invitacion 🙂'),
+
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, 'Cancel'),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, 'OK'),
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                  }
+
+
                 }
               },
             ),
@@ -142,7 +214,9 @@ class _HomePageState extends State<HomePage> {
 }
 
 
-ListTile tile(String title, String subtitle, IconData icon) {
+
+ListTile tile(String title, String subtitle) {
+
   return ListTile(
     title: Text(title,
         style: const TextStyle(
@@ -150,22 +224,13 @@ ListTile tile(String title, String subtitle, IconData icon) {
           fontSize: 20,
         )),
     subtitle: Text(subtitle),
-    trailing: Icon(icon),
+    trailing: Icon(Icons.copy),
     onTap: () {
       Clipboard.setData(ClipboardData(text: subtitle));
     },
   );
 }
 
-
-//aqui trato de obtener string
-Future<String?> getStringValuesSF() async {
-  late final String variableParaString;
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  variableParaString = (await prefs.getString('uno'))!;
-  print(variableParaString);
-  return variableParaString.toString();
-}
 
 setPassword() {
   //character is a varaible to choose if use special character, number, mayus or minus
@@ -188,45 +253,117 @@ setPassword() {
 }
 
 String password = '';
+String titulo = '';
+
 //funcion crear contraseña
 getPassword(int lenght) {
-
-
-  // String password = String.fromCharCode(specialCharacters) + String.fromCharCode(numbers) + String.fromCharCode(mayus) + String.fromCharCode(minus);
-
-
   for (var i = 0 ; i < lenght; i++) {
     //concatenate string
     password = password + String.fromCharCode(setPassword());
   }
-  print(password);
+  // print(password);
+}
+
+getAllList() async{
+  Map<String, String> allValues = await storage.readAll();
+  print('all values: '+ allValues.toString());
+  return allValues;
+}
+
+RichText? generateList() {
+
+  String concatenate = '';
+
+  getAllList().then((s){
+    s.forEach((key, value) {
+
+      // print(key + '\n' + value);
+      print('cosa 1');
+
+      concatenate = concatenate + (key + '\n' + value + '\n');
+
+    });
+    print('concatenao en then: ' + concatenate);
+    return RichText(
+      text: TextSpan(
+        text: concatenate,
+      ),
+    );
+  });
+  print ('cosa 2');
+
+
+  print ('cosa 2');
 
 }
+
+// ListTile DataBase() {
+//   getAllList().forEach((key, value) {
+//     return tile(key, value);
+// });
+//
+// }
+
+// generateList() {
+//
+//   var concatenate = generateListthen();
+//   print('list will return: ' + concatenate);
+//   // print ('concatenao: ' + concatenate);
+//
+// }
+
 
 //segunda ventana
 /*
   REPEAT = FOR
  */
 class SecondRoute extends StatelessWidget {
+  //readValueInSecureStorage('arremangala').then((s){print(s);})
+
+
+
   @override
   Widget build(BuildContext context) {
+
+    // String concatenate = '';
+    //
+    // getAllList().then((s){
+    //   s.forEach((key, value) {
+    //
+    //     // print(key + '\n' + value);
+    //     print('cosa 1');
+    //
+    //     concatenate = concatenate + (key + '\n' + value + '\n');
+    //
+    //   });
+    //   print('concatenao en then: ' + concatenate);
+    // });
+    // print ('cosa 2');
+
+    var list;
+    @override
+    void initState() {
+      list != generateList();
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text("Bienvenid@"),
       ),
 
-      body:
 
+      body:
       ListView(
         padding: EdgeInsets.all(10),
         children: [
 
-          tile('Facebook', 'asd', Icons.copy),
+          tile('', 'password'),
+
+          // list,
 
 
-          //
-          tile(getStringValuesSF().toString(), 'asd', Icons.copy),
+
 
           Align(
             alignment: Alignment.bottomRight,
@@ -236,11 +373,13 @@ class SecondRoute extends StatelessWidget {
               child: const Icon(Icons.add),
 
               onPressed: () {
-                getPassword(500);
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(builder: (context) => ThirdRoute()),
-                // );
+
+                // print(Lista);
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ThirdRoute()),
+                );
               },
             ),
           )
@@ -255,8 +394,10 @@ class SecondRoute extends StatelessWidget {
 class ThirdRoute extends StatelessWidget {
 
   //variables textfield
-  final passwordTextField = TextEditingController();
-  String password = '';
+  final passwordTitle = TextEditingController();
+  final passwordLength = TextEditingController();
+  int lenghtChoose = 0;
+
 
   @override
   Widget build(BuildContext context) {
@@ -266,14 +407,12 @@ class ThirdRoute extends StatelessWidget {
         title: Text("Generar Contraseña"),
       ),
 
-      body:
-
-
-      Column(
+      body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+
           TextField(
-            controller: TextEditingController(),
+            controller: passwordTitle,
             decoration: InputDecoration(
 
               //hint
@@ -299,31 +438,34 @@ class ThirdRoute extends StatelessWidget {
             keyboardType: TextInputType.text,
           ),
 
+          const SizedBox(
+            height: 12.0, //space bc it looks nashe
+          ),
 
+          TextField(
+            controller: passwordLength,
+              keyboardType:
+              TextInputType.numberWithOptions(signed: false, decimal: false),
+            decoration: InputDecoration(
 
-          ListTile(
-            title: Text("Arre 1"),
-            leading: Radio(
-              value: 1,
-              groupValue: -1,
-              onChanged: (value) {
+              //hint
+              hintText: "Largo de la contraseña",
+              hintStyle: TextStyle(color: Colors.grey),
 
-              },
-              activeColor: Colors.blue,
+              enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: Colors.blue
+                  )
+              ),
+
+              border: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: Colors.blue
+                  )
+              ),
             ),
           ),
 
-          ListTile(
-            title: Text("Arre 2"),
-            leading: Radio(
-              value: 2,
-              groupValue: 1,
-              onChanged: (value) {
-
-              },
-              activeColor: Colors.blue,
-            ),
-          ),
 
           const SizedBox(
             height: 12.0, //space bc it looks nashe
@@ -338,13 +480,39 @@ class ThirdRoute extends StatelessWidget {
               child: const Icon(Icons.arrow_forward_ios_rounded),
 
               onPressed: () {
-                getPassword(2);
+                lenghtChoose =  int.tryParse(passwordLength.text.toString())!;
+                if(passwordTitle.text == '' || lenghtChoose.isNegative || lenghtChoose.isNaN){
+                  showDialog<String>(
+                    context: context,
+                    builder: (BuildContext context) => AlertDialog(
+                      title: const Text('Vacio? 🤔'),
+                      content: const Text('No puedo dejarlo pasar 🙂'),
 
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => SecondRoute()),
-                      (Route<dynamic> route) => false,
-                );
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, 'Cancel'),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, 'OK'),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                } else {
+                  titulo != passwordTitle.text;
+                  password != getPassword(lenghtChoose);
+
+                  saveSecureStorage(titulo, password);
+
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => SecondRoute()),
+                        (Route<dynamic> route) => false,
+                  );
+                }
+
               },
             ),
           )
