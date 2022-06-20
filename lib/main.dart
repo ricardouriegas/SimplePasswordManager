@@ -1,4 +1,7 @@
 //running this app with --no-sound-null-safety
+/*
+Author: Ricardo Uriegas
+ */
 
 import 'dart:convert';
 import 'dart:ui';
@@ -48,10 +51,11 @@ class HomePage extends StatefulWidget {
 }
 
 
-
+/**
+ * Login page: para entrar a ver la lista de contrasenas del usuario
+ */
 class _HomePageState extends State<HomePage> {
   @override
-
   //variable password writed on the text field
   final passwordTextField = TextEditingController();
 
@@ -66,7 +70,7 @@ class _HomePageState extends State<HomePage> {
         });
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text('Contraseña 😏'),
       ),
@@ -83,7 +87,7 @@ class _HomePageState extends State<HomePage> {
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
                     fontSize:50,
-                    color: Colors.white,
+                    color: Colors.black,
                   )
               ),
             ),
@@ -99,8 +103,8 @@ class _HomePageState extends State<HomePage> {
             decoration: InputDecoration(
 
               //hint
-              hintText: "Contraseña",
-              hintStyle: TextStyle(color: Colors.white54),
+              hintText: "Ingresar contraseña",
+              hintStyle: TextStyle(color: Colors.grey),
 
               //bordes
               enabledBorder: OutlineInputBorder(
@@ -117,7 +121,7 @@ class _HomePageState extends State<HomePage> {
             ),
 
             style:TextStyle(
-              color: Colors.white,
+              color: Colors.black,
             ),
             keyboardType: TextInputType.text,
           ),
@@ -148,8 +152,10 @@ class _HomePageState extends State<HomePage> {
                   showDialog<String>(
                     context: context,
                     builder: (BuildContext context) => AlertDialog(
-                      title: const Text('Creo que se le olvido escribir su contraseña'),
-                      content: const Text('No puedo dejarlo pasar sin invitacion 🙂'),
+                      title: const Text('Creo que se le olvido escribir su '
+                                        'contraseña'),
+                      content: const Text('No puedo dejarlo pasar sin invitacion'
+                                          ' 🙂'),
 
                       actions: <Widget>[
                         TextButton(
@@ -164,8 +170,8 @@ class _HomePageState extends State<HomePage> {
                     ),
                   );
                 } else {
-                  if(valueMother.toString() == ''){
-                    print('null compayito');
+                  if(valueMother == '' || valueMother == null){
+                    print(valueMother);
                     saveSecureStorage('mother_key', passwordTextField.text);
                   } else {
                     if(passwordTextField.text == valueMother.toString()){
@@ -256,6 +262,11 @@ String password = '';
 String titulo = '';
 
 //funcion crear contraseña
+/**
+ * Funcion para crear una contrasena
+ * @return void
+ * @param length longitud the la contrasena
+ */
 getPassword(int lenght) {
   for (var i = 0 ; i < lenght; i++) {
     //concatenate string
@@ -264,74 +275,22 @@ getPassword(int lenght) {
   // print(password);
 }
 
-getAllList() async{
-  Map<String, String> allValues = await storage.readAll();
-  print('all values: '+ allValues.toString());
-  return allValues;
+/**
+ * Function to get all the data inside the storage and put it in a map
+ */
+Future<Map<String, String>> getAllList() async {
+  return storage.readAll();
 }
 
-RichText? generateList() {
 
-  String concatenate = '';
-
-  getAllList().then((s){
-    s.forEach((key, value) {
-
-      // print(key + '\n' + value);
-      print('cosa 1');
-
-      concatenate = concatenate + (key + '\n' + value + '\n');
-
-    });
-    print('concatenao en then: ' + concatenate);
-    return RichText(
-      text: TextSpan(
-        text: concatenate,
-      ),
-    );
-  });
-  print ('cosa 2');
-
-
-  print ('cosa 2');
-
-}
-
-// ListTile DataBase() {
-//   getAllList().forEach((key, value) {
-//     return tile(key, value);
-// });
-//
-// }
-
-// generateList() {
-//
-//   var concatenate = generateListthen();
-//   print('list will return: ' + concatenate);
-//   // print ('concatenao: ' + concatenate);
-//
-// }
-
-
-//segunda ventana
-/*
-  REPEAT = FOR
+/**
+ * Segunda ventana: lista de contrasenas
  */
 class SecondRoute extends StatelessWidget {
-  //readValueInSecureStorage('arremangala').then((s){print(s);})
-
-
-
   @override
   Widget build(BuildContext context) {
 
-    // String concatenate = '';
-    //
     // getAllList().then((s){
-    //   s.forEach((key, value) {
-    //
-    //     // print(key + '\n' + value);
-    //     print('cosa 1');
     //
     //     concatenate = concatenate + (key + '\n' + value + '\n');
     //
@@ -340,64 +299,172 @@ class SecondRoute extends StatelessWidget {
     // });
     // print ('cosa 2');
 
-    var list;
-    @override
-    void initState() {
-      list != generateList();
-    }
+    String concatenate = '';
+    Map<String, String> claves;
+    final getKeyString = TextEditingController();
+
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text("Bienvenid@"),
       ),
-
-
       body:
+
       ListView(
         padding: EdgeInsets.all(10),
         children: [
 
-          tile('', 'password'),
 
-          // list,
+          FutureBuilder (
+              future: getAllList(),
+              initialData: Text("Vacio"),
+              builder: (BuildContext context, AsyncSnapshot snapshot){
+                if (snapshot.hasData) {
+                  claves = snapshot.data;
+                  claves.forEach((key, value) {
+                    // print(key);
+                    concatenate += ('Titulo: ' + key + '\n' + 'Contraseña: ' + value + '\n\n');
+                  });
 
+                  return Text(concatenate);
 
-
-
+                }
+                else {
+                  return Text('No passwords found');
+                }
+              }
+          ),
+          
           Align(
             alignment: Alignment.bottomRight,
 
-            child: FloatingActionButton(
+            child:FloatingActionButton(
               backgroundColor: Colors.cyan,
               child: const Icon(Icons.add),
 
               onPressed: () {
-
-                // print(Lista);
-
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => ThirdRoute()),
                 );
               },
             ),
-          )
+          ),
+
+
+          const SizedBox(
+            height: 12.0, //space bc it looks nashe
+          ),
+
+          TextField(
+            controller: getKeyString,
+            decoration: InputDecoration(
+
+              //hint
+              hintText: "Titulo para copiar al clipboard una contraseña",
+              hintStyle: TextStyle(color: Colors.grey),
+
+              enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: Colors.blue
+                  )
+              ),
+
+              border: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: Colors.blue
+                  )
+              ),
+            ),
+
+
+
+            style:TextStyle(
+              color: Colors.black,
+            ),
+            keyboardType: TextInputType.text,
+          ),
+          const SizedBox(
+            height: 12.0, //space bc it looks nashe
+          ),
+          Align(
+            alignment: Alignment.bottomRight,
+
+            child:FloatingActionButton(
+              backgroundColor: Colors.cyan,
+              child: const Icon(Icons.copy_rounded),
+
+              onPressed: () {
+                if (getKeyString.text == '') {
+                  showDialog<String>(
+                    context: context,
+                    builder: (BuildContext context) => AlertDialog(
+                      title: const Text('Vacio? 🤔'),
+                      content: const Text('No puedo copiar al ClipBoard si esta vacio 🙂'),
+
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, 'Cancel'),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, 'OK'),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                } else {
+                  /**
+                   * Read some value from secure storage using the key string
+                   */
+                  readValueInSecureStorage(getKeyString.text).then((s){
+                    if(s == null){
+                      showDialog<String>(
+                        context: context,
+                        builder: (BuildContext context) => AlertDialog(
+                          title: const Text('Creo que hay algo mal con el titulo 🤔'),
+                          content: const Text('Parece que el titulo puesto es incorrecto 🙂'),
+
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, 'Cancel'),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, 'OK'),
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        ),
+                      );
+                    } else {
+                      Clipboard.setData(ClipboardData(text: s));
+                    }
+
+                  });
+                }
+              },
+            ),
+          ),
         ],
       ),
+
     );
   }
 }
 
 
-//tercera ventana
+/**
+ * Tercera ventana: Agregar nueva contrasena
+ */
 class ThirdRoute extends StatelessWidget {
 
   //variables textfield
   final passwordTitle = TextEditingController();
   final passwordLength = TextEditingController();
   int lenghtChoose = 0;
-
 
   @override
   Widget build(BuildContext context) {
@@ -501,10 +568,10 @@ class ThirdRoute extends StatelessWidget {
                     ),
                   );
                 } else {
-                  titulo != passwordTitle.text;
                   password != getPassword(lenghtChoose);
 
-                  saveSecureStorage(titulo, password);
+                  saveSecureStorage(passwordTitle.text, password);
+
 
                   Navigator.pushAndRemoveUntil(
                     context,
