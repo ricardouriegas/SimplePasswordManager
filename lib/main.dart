@@ -36,7 +36,7 @@ Future saveSecureStorage (String key, String value) async {
 }
 
 Future readValueInSecureStorage (String key) async {
-  //this should return an string
+  //this should return an string the value
   return await storage.read(key: key);
 }
 
@@ -159,10 +159,6 @@ class _HomePageState extends State<HomePage> {
 
                       actions: <Widget>[
                         TextButton(
-                          onPressed: () => Navigator.pop(context, 'Cancel'),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
                           onPressed: () => Navigator.pop(context, 'OK'),
                           child: const Text('OK'),
                         ),
@@ -171,7 +167,7 @@ class _HomePageState extends State<HomePage> {
                   );
                 } else {
                   if(valueMother == '' || valueMother == null){
-                    print(valueMother);
+                    // print(valueMother);
                     saveSecureStorage('mother_key', passwordTextField.text);
                   } else {
                     if(passwordTextField.text == valueMother.toString()){
@@ -204,10 +200,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       );
                     }
-
                   }
-
-
                 }
               },
             ),
@@ -239,12 +232,12 @@ ListTile tile(String title, String subtitle) {
 
 
 setPassword() {
-  //character is a varaible to choose if use special character, number, mayus or minus
+  //character is a variable to choose if use special character, number, mayus or minus
   int character = 1 + Random().nextInt(5 - 1);
 
   //here with the variable character i return the random type of character
   if (character == 1) {
-    //special charactes
+    //special characters
     return 33 + Random().nextInt(39 - 33);
   } else if (character == 2) {
     //numbers
@@ -270,7 +263,7 @@ String titulo = '';
 getPassword(int lenght) {
   for (var i = 0 ; i < lenght; i++) {
     //concatenate string
-    password = password + String.fromCharCode(setPassword());
+    password += String.fromCharCode(setPassword());
   }
   // print(password);
 }
@@ -301,6 +294,7 @@ class SecondRoute extends StatelessWidget {
 
     String concatenate = '';
     Map<String, String> claves;
+
     final getKeyString = TextEditingController();
 
 
@@ -319,7 +313,8 @@ class SecondRoute extends StatelessWidget {
           FutureBuilder (
               future: getAllList(),
               initialData: Text("Vacio"),
-              builder: (BuildContext context, AsyncSnapshot snapshot){
+
+              builder: (BuildContext context, AsyncSnapshot snapshot) {
                 if (snapshot.hasData) {
                   claves = snapshot.data;
                   claves.forEach((key, value) {
@@ -329,9 +324,8 @@ class SecondRoute extends StatelessWidget {
 
                   return Text(concatenate);
 
-                }
-                else {
-                  return Text('No passwords found');
+                } else {
+                  return Text('No contraseñeishon');
                 }
               }
           ),
@@ -385,9 +379,11 @@ class SecondRoute extends StatelessWidget {
             ),
             keyboardType: TextInputType.text,
           ),
+
           const SizedBox(
             height: 12.0, //space bc it looks nashe
           ),
+
           Align(
             alignment: Alignment.bottomRight,
 
@@ -405,10 +401,6 @@ class SecondRoute extends StatelessWidget {
 
                       actions: <Widget>[
                         TextButton(
-                          onPressed: () => Navigator.pop(context, 'Cancel'),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
                           onPressed: () => Navigator.pop(context, 'OK'),
                           child: const Text('OK'),
                         ),
@@ -420,6 +412,7 @@ class SecondRoute extends StatelessWidget {
                    * Read some value from secure storage using the key string
                    */
                   readValueInSecureStorage(getKeyString.text).then((s){
+
                     if(s == null){
                       showDialog<String>(
                         context: context,
@@ -464,6 +457,7 @@ class ThirdRoute extends StatelessWidget {
   //variables textfield
   final passwordTitle = TextEditingController();
   final passwordLength = TextEditingController();
+
   int lenghtChoose = 0;
 
   @override
@@ -548,6 +542,7 @@ class ThirdRoute extends StatelessWidget {
 
               onPressed: () {
                 lenghtChoose =  int.tryParse(passwordLength.text.toString())!;
+
                 if(passwordTitle.text == '' || lenghtChoose.isNegative || lenghtChoose.isNaN){
                   showDialog<String>(
                     context: context,
@@ -556,10 +551,6 @@ class ThirdRoute extends StatelessWidget {
                       content: const Text('No puedo dejarlo pasar 🙂'),
 
                       actions: <Widget>[
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, 'Cancel'),
-                          child: const Text('Cancel'),
-                        ),
                         TextButton(
                           onPressed: () => Navigator.pop(context, 'OK'),
                           child: const Text('OK'),
@@ -571,7 +562,6 @@ class ThirdRoute extends StatelessWidget {
                   password != getPassword(lenghtChoose);
 
                   saveSecureStorage(passwordTitle.text, password);
-
 
                   Navigator.pushAndRemoveUntil(
                     context,
